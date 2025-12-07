@@ -78,16 +78,19 @@ async function remove(userId) {
 }
 
 async function update(user) {
+
     try {
-        // peek only updatable properties
-        const userToSave = {
-            _id: ObjectId.createFromHexString(user._id), // needed for the returnd obj
-            fullname: user.fullname,
-            score: user.score,
-        }
+
         const collection = await dbService.getCollection('user')
-        await collection.updateOne({ _id: userToSave._id }, { $set: userToSave })
-        return userToSave
+        
+        const userToSave = {
+            _id: ObjectId.createFromHexString(user._id),
+            fullname: user.fullname,
+            savedStations: user.savedStations || [],
+            recentlyPlayed: user.recentlyPlayed || []
+        };
+        await collection.updateOne({ _id: userToSave._id }, { $set: userToSave });
+        return { ...userToSave, _id: user._id };
     } catch (err) {
         logger.error(`cannot update user ${user._id}`, err)
         throw err
