@@ -30,11 +30,13 @@ export async function getStationById(req, res) {
 }
 
 export async function addStation(req, res) {
-    // const { loggedinUser, body: station } = req
-    const { body: station } = req
+    const { loggedinUser, body: station } = req
+    // const { body: station } = req
+
+    // console.log('req.cookie:', req.cookie)
 
     try {
-        // station.createdBy = loggedinUser
+        station.createdBy = loggedinUser
         const addedStation = await stationService.add(station)
         res.json(addedStation) // Send only station ID?
     } catch (err) {
@@ -44,11 +46,13 @@ export async function addStation(req, res) {
 }
 
 export async function updateStation(req, res) {
-    // const { loggedinUser, body: station } = req
-    const { body: station } = req
-    // const { _id: userId, isAdmin } = loggedinUser
+    const { loggedinUser, body: station } = req
+    // const { body: station } = req
+    const { _id: userId, isAdmin } = loggedinUser
 
-    // if (!isAdmin && station.owner._id !== userId) {
+    
+
+    // if (station.createdBy._id !== userId) {
     //     res.status(403).send('Not your station...')
     //     return
     // }
