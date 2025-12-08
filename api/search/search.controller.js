@@ -1,10 +1,21 @@
-import { spotifyService } from './search.service.js'
+import { searchService } from './search.service.js'
 
 export async function searchSpotify(req, res) {
     const { q } = req.query
     try {
-        const results = await spotifyService.search(q)
-        console.log(results.tracks)
+        const results = await searchService.searchSpotify(q)
         res.json(results.tracks)
-    } catch (err) {}
+    } catch (err) {
+        throw err
+    }
+}
+
+export async function fetchYtbId(req, res) {
+    const { q: songName } = req.query
+    try {
+        const ytbId = await searchService.searchYtb(songName)
+        res.json({ ytbId })
+    } catch (err) {
+        throw err
+    }
 }
