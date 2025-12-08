@@ -91,7 +91,7 @@ function _formatSong(song) {
         title: name,
         album: album.name,
         genre: '',
-        artists: artists.map((artist) => artist.name),
+        artists: artists.map((artist) => ({name: artist.name})),
         imgUrl: album.images[0].url,
         duration: duration_ms,
     }
