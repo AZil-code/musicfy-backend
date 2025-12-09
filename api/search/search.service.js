@@ -9,6 +9,8 @@ export const searchService = { searchSpotify, searchYtb }
 const defaultSearchContents = ['track', 'album', 'artist']
 
 async function searchYtb(songName) {
+
+    console.log('searching YT')
     const type = 'video'
     const part = 'snippet'
     const endpoint = `${YTB_URL}/search?key=${process.env.YTB_API_KEY}&type=${type}&part=${part}&q=${songName}&maxResults=1`
@@ -51,11 +53,17 @@ async function searchSpotify(
                 Authorization: accessToken,
             },
         })
+        if (!res.ok) {
+            throw new Error(`Bad response from Spotify: ${res.status} - ${res.statusText}`)
+        }
         const body = await res.json()
+        const tracksArr = (body && body.tracks && Array.isArray(body.tracks.items)) ? body.tracks.items : []
+        const albumsArr = (body && body.albums && Array.isArray(body.albums.items)) ? body.albums.items : []
+        const artistsArr = (body && body.artists && Array.isArray(body.artists.items)) ? body.artists.items : []
         return {
-            tracks: body.tracks.items.map((track) => _formatSong(track)),
-            albums: body.albums.items,
-            artists: body.artists.items,
+            tracks: tracksArr.map((track) => _formatSong(track)),
+            albums: albumsArr,
+            artists: artistsArr,
         }
     } catch (err) {
         logger.error('Failed searching Spotify', err)
@@ -93,6 +101,6 @@ function _formatSong(song) {
         genre: '',
         artists: artists.map((artist) => ({name: artist.name})),
         imgUrl: album.images[0].url,
-        duration: duration_ms,
+        duration: Math.round((duration_ms || 0) / 1000), // seconds to match frontend expectation
     }
 }
