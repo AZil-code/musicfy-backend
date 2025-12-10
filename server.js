@@ -38,6 +38,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/station', stationRoutes)
+app.use('/api/search', searchRoutes)
 
 setupSocketAPI(server)
 
@@ -51,6 +52,7 @@ app.get('/*all', (req, res) => {
 })
 
 import { logger } from './services/logger.service.js'
+import { searchRoutes } from './api/search/search.routes.js'
 const port = process.env.PORT || 3030
 
 server.listen(port, () => {
