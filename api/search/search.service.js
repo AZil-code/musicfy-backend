@@ -6,7 +6,7 @@ const YTB_URL = 'https://www.googleapis.com/youtube/v3'
 const SONG_QUERY_LIMIT = 10
 
 export const searchService = { searchSpotify, searchYtb }
-const defaultSearchContents = ['track', 'album', 'artist']
+const defaultSearchContents = ['track', 'album', 'artist', 'playlist']
 
 async function searchYtb(songName) {
 
@@ -60,10 +60,13 @@ async function searchSpotify(
         const tracksArr = (body && body.tracks && Array.isArray(body.tracks.items)) ? body.tracks.items : []
         const albumsArr = (body && body.albums && Array.isArray(body.albums.items)) ? body.albums.items : []
         const artistsArr = (body && body.artists && Array.isArray(body.artists.items)) ? body.artists.items : []
+        const playlistsArr = (body && body.playlists && Array.isArray(body.playlists.items)) ? body.playlists.items : []
+
         return {
             tracks: tracksArr.map((track) => _formatSong(track)),
             albums: albumsArr,
             artists: artistsArr,
+            playlists: playlistsArr
         }
     } catch (err) {
         logger.error('Failed searching Spotify', err)
