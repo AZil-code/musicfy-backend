@@ -19,3 +19,12 @@ export async function fetchYtbId(req, res) {
         throw err
     }
 }
+
+export async function fetchCategories(req, res) {
+    try {
+        const categories = await searchService.getCategories()
+        res.json(categories)
+    } catch (err) {
+        throw err
+    }
+}

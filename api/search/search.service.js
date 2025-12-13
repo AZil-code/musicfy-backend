@@ -1,15 +1,15 @@
 import 'dotenv/config'
 import { logger } from '../../services/logger.service.js'
+import { dbService } from '../../services/db.service.js'
 
 const SPOTIFY_URL = 'https://api.spotify.com/v1/'
 const YTB_URL = 'https://www.googleapis.com/youtube/v3'
 const SONG_QUERY_LIMIT = 10
 
-export const searchService = { searchSpotify, searchYtb }
+export const searchService = { searchSpotify, searchYtb, getCategories }
 const defaultSearchContents = ['track', 'album', 'artist', 'playlist']
 
 async function searchYtb(songName) {
-
     console.log('searching YT')
     const type = 'video'
     const part = 'snippet'
@@ -54,22 +54,47 @@ async function searchSpotify(
             },
         })
         if (!res.ok) {
-            throw new Error(`Bad response from Spotify: ${res.status} - ${res.statusText}`)
+            throw new Error(
+                `Bad response from Spotify: ${res.status} - ${res.statusText}`
+            )
         }
         const body = await res.json()
-        const tracksArr = (body && body.tracks && Array.isArray(body.tracks.items)) ? body.tracks.items : []
-        const albumsArr = (body && body.albums && Array.isArray(body.albums.items)) ? body.albums.items : []
-        const artistsArr = (body && body.artists && Array.isArray(body.artists.items)) ? body.artists.items : []
-        const playlistsArr = (body && body.playlists && Array.isArray(body.playlists.items)) ? body.playlists.items : []
+        const tracksArr =
+            body && body.tracks && Array.isArray(body.tracks.items)
+                ? body.tracks.items
+                : []
+        const albumsArr =
+            body && body.albums && Array.isArray(body.albums.items)
+                ? body.albums.items
+                : []
+        const artistsArr =
+            body && body.artists && Array.isArray(body.artists.items)
+                ? body.artists.items
+                : []
+        const playlistsArr =
+            body && body.playlists && Array.isArray(body.playlists.items)
+                ? body.playlists.items
+                : []
 
         return {
             tracks: tracksArr.map((track) => _formatSong(track)),
             albums: albumsArr,
             artists: artistsArr,
-            playlists: playlistsArr
+            playlists: playlistsArr,
         }
     } catch (err) {
         logger.error('Failed searching Spotify', err)
+        throw err
+    }
+}
+
+async function getCategories() {
+    try {
+        const collection = await dbService.getCollection('category')
+        const categories = await collection.find()
+        return categories.toArray()
+    } catch (err) {
+        logger.error('Cannot find categories', err)
         throw err
     }
 }
@@ -102,7 +127,7 @@ function _formatSong(song) {
         title: name,
         album: album.name,
         genre: '',
-        artists: artists.map((artist) => ({name: artist.name})),
+        artists: artists.map((artist) => ({ name: artist.name })),
         imgUrl: album.images[0].url,
         duration: Math.round((duration_ms || 0) / 1000), // seconds to match frontend expectation
     }
