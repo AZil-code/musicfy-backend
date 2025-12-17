@@ -6,7 +6,12 @@ const SPOTIFY_URL = 'https://api.spotify.com/v1/'
 const YTB_URL = 'https://www.googleapis.com/youtube/v3'
 const SONG_QUERY_LIMIT = 10
 
-export const searchService = { searchSpotify, searchYtb, getCategories }
+export const searchService = {
+    searchSpotify,
+    searchYtb,
+    getCategories,
+    getAccessToken,
+}
 const defaultSearchContents = ['track', 'album', 'artist', 'playlist']
 
 async function searchYtb(songName) {
@@ -32,25 +37,21 @@ async function searchYtb(songName) {
 // Can add limit
 async function searchSpotify(
     searchString,
-    contentTypeList = defaultSearchContents
+    { contentTypeList = defaultSearchContents, limit = SONG_QUERY_LIMIT }
 ) {
     if (!Array.isArray(contentTypeList))
         throw new Error(
             'Cannot search spotify - passed content types are not a list'
         )
     let endpoint =
-        SPOTIFY_URL +
-        `search?q=${encodeURI(searchString)}&limit=${SONG_QUERY_LIMIT}`
+        SPOTIFY_URL + `search?q=${encodeURI(searchString)}&limit=${limit}`
     if (contentTypeList.length > 0)
         endpoint += '&type=' + contentTypeList.join(',')
     try {
-        const accessToken = process.env.ACCESS_TOKEN
-            ? process.env.ACCESS_TOKEN
-            : await _getAccessToken()
         const res = await fetch(endpoint, {
             method: 'GET',
             headers: {
-                Authorization: accessToken,
+                Authorization: process.env.ACCESS_TOKEN,
             },
         })
         if (!res.ok) {
@@ -76,11 +77,17 @@ async function searchSpotify(
                 ? body.playlists.items
                 : []
 
+        const cleanPlaylistArray = playlistsArr.filter(
+            (playlist) => playlist != null
+        )
+
         return {
             tracks: tracksArr.map((track) => _formatSong(track)),
             albums: albumsArr,
             artists: artistsArr,
-            playlists: playlistsArr,
+            playlists: cleanPlaylistArray.map((playlist) =>
+                _formatStation(playlist)
+            ),
         }
     } catch (err) {
         logger.error('Failed searching Spotify', err)
@@ -99,7 +106,7 @@ async function getCategories() {
     }
 }
 
-async function _getAccessToken() {
+async function getAccessToken() {
     logger.info('Fetching spotify API token')
     const endpoint = `https://accounts.spotify.com/api/token?grant_type=client_credentials&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}`
     try {
@@ -113,6 +120,7 @@ async function _getAccessToken() {
         process.env.ACCESS_TOKEN = 'Bearer ' + body.access_token
         return 'Bearer ' + body.access_token
     } catch (err) {
+        console.log(err)
         logger.error('Cannot get Spotify access token', err)
         throw err
     }
@@ -130,5 +138,22 @@ function _formatSong(song) {
         artists: artists.map((artist) => ({ name: artist.name })),
         imgUrl: album.images[0].url,
         duration: Math.round((duration_ms || 0) / 1000), // seconds to match frontend expectation
+    }
+}
+function _formatStation(station) {
+    const { id, name, description, images, owner } = station
+    return {
+        name,
+        spotifyId: id,
+        description,
+        coverImage: images[0].url,
+        // tags,
+        createdBy: {
+            _id: owner._id,
+            username: owner.display_name,
+            // imgUrl: 'https://misc.scdn.co/liked-songs/playlist-announcement-image.jpg',
+        },
+        isLikedSongsPlaylist: false,
+        isPrivate: false,
     }
 }

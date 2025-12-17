@@ -10,6 +10,19 @@ export async function searchSpotify(req, res) {
     }
 }
 
+export async function searchPlaylists(req, res) {
+    const { q } = req.query
+    try {
+        const results = await searchService.searchSpotify(q, {
+            contentTypeList: ['playlist'],
+            limit: 10,
+        })
+        res.json(results.playlists.filter((p) => p))
+    } catch (err) {
+        throw err
+    }
+}
+
 export async function fetchYtbId(req, res) {
     const { q: songName } = req.query
     try {
