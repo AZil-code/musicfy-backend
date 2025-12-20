@@ -10,6 +10,7 @@ import {
     updateStation,
     removeStation,
 } from './station.controller.js'
+import { getSpotifyBearerToken } from '../../middlewares/bearerTokenFetch.middleware.js'
 
 const router = express.Router()
 
@@ -17,7 +18,7 @@ const router = express.Router()
 // router.use(requireAuth)
 
 router.get('/', log, getStations)
-router.get('/:id', log, getStationById)
+router.get('/:id', log, getSpotifyBearerToken, getStationById)
 router.post('/', log, requireAuth, addStation)
 // router.post('/', log, addStation)
 router.put('/:id', requireAuth, updateStation)
