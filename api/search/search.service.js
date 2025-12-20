@@ -8,6 +8,7 @@ const SONG_QUERY_LIMIT = 10
 
 export const searchService = {
     searchSpotify,
+    searchPlaylist,
     searchYtb,
     getCategories,
     getAccessToken,
@@ -66,7 +67,7 @@ async function searchSpotify(
                 : []
         const albumsArr =
             body && body.albums && Array.isArray(body.albums.items)
-                ? body.albums.items
+                ? body.albums.items.filter((album) => album != null)
                 : []
         const artistsArr =
             body && body.artists && Array.isArray(body.artists.items)
@@ -74,23 +75,64 @@ async function searchSpotify(
                 : []
         const playlistsArr =
             body && body.playlists && Array.isArray(body.playlists.items)
-                ? body.playlists.items
+                ? body.playlists.items.filter((playlist) => playlist != null)
                 : []
-
-        const cleanPlaylistArray = playlistsArr.filter(
-            (playlist) => playlist != null
-        )
 
         return {
             tracks: tracksArr.map((track) => _formatSong(track)),
-            albums: albumsArr,
+            albums: albumsArr.map((album) => _formatStation(album, 'album')),
             artists: artistsArr,
-            playlists: cleanPlaylistArray.map((playlist) =>
-                _formatStation(playlist)
-            ),
+            playlists: playlistsArr.map((playlist) => _formatStation(playlist)),
         }
     } catch (err) {
         logger.error('Failed searching Spotify', err)
+        throw err
+    }
+}
+
+async function searchPlaylist(playlistSpotifyId) {
+    if (!playlistSpotifyId) throw new Error('Invalid spotify ID')
+    const endpoint = SPOTIFY_URL + `playlists/${playlistSpotifyId}`
+    try {
+        const res = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                Authorization: process.env.ACCESS_TOKEN,
+            },
+        })
+        if (!res.ok) {
+            throw new Error(
+                `Bad response from Spotify: ${res.status} - ${res.statusText}`
+            )
+        }
+        const body = await res.json()
+        body.items = await _searchPlaylistSongs(playlistSpotifyId)
+        return _formatStation(body)
+    } catch (err) {
+        logger.error('Failed searching playlist in Spotify', err)
+        throw err
+    }
+}
+
+async function _searchPlaylistSongs(playlistSpotifyId) {
+    if (!playlistSpotifyId) throw new Error('Invalid spotify ID')
+    const endpoint = SPOTIFY_URL + `playlists/${playlistSpotifyId}/tracks`
+    try {
+        const res = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                Authorization: process.env.ACCESS_TOKEN,
+            },
+        })
+        if (!res.ok) {
+            throw new Error(
+                `Bad response from Spotify: ${res.status} - ${res.statusText}`
+            )
+        }
+        const body = await res.json()
+        return body.items
+    } catch (err) {
+        logger.error('Failed searching playlist in Spotify', err)
         throw err
     }
 }
@@ -140,20 +182,27 @@ function _formatSong(song) {
         duration: Math.round((duration_ms || 0) / 1000), // seconds to match frontend expectation
     }
 }
-function _formatStation(station) {
-    const { id, name, description, images, owner } = station
+
+// type - album, playlist
+function _formatStation(station, type = 'playlist') {
+    const { id, name, description, images, owner, items } = station
     return {
         name,
         spotifyId: id,
         description,
         coverImage: images[0].url,
         // tags,
-        createdBy: {
-            _id: owner._id,
-            username: owner.display_name,
-            // imgUrl: 'https://misc.scdn.co/liked-songs/playlist-announcement-image.jpg',
-        },
+        createdBy:
+            type === 'playlist'
+                ? {
+                      _id: owner._id,
+                      username: owner.display_name,
+                      // imgUrl: 'https://misc.scdn.co/liked-songs/playlist-announcement-image.jpg',
+                  }
+                : null,
         isLikedSongsPlaylist: false,
         isPrivate: false,
+        type: type,
+        songs: items ? items.map((song) => _formatSong(song.track)) : null,
     }
 }

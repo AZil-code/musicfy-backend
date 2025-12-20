@@ -1,5 +1,8 @@
 import { logger } from '../../services/logger.service.js'
+import { searchService } from '../search/search.service.js'
 import { stationService } from './station.service.js'
+
+const SPOTIFY_ID_LENGTH = 22
 
 export async function getStations(req, res) {
     try {
@@ -21,7 +24,14 @@ export async function getStations(req, res) {
 export async function getStationById(req, res) {
     try {
         const stationId = req.params.id
-        const station = await stationService.getById(stationId)
+        let station
+        if (stationId.length === SPOTIFY_ID_LENGTH) {
+            console.log('if')
+            station = await searchService.searchPlaylist(stationId)
+        } else {
+            console.log('else')
+            station = await stationService.getById(stationId)
+        }
         res.json(station)
     } catch (err) {
         logger.error('Failed to get station', err)
@@ -49,8 +59,6 @@ export async function updateStation(req, res) {
     const { loggedinUser, body: station } = req
     // const { body: station } = req
     const { _id: userId, isAdmin } = loggedinUser
-
-    
 
     // if (station.createdBy._id !== userId) {
     //     res.status(403).send('Not your station...')

@@ -1,8 +1,9 @@
 import express from 'express'
 import {
-    fetchCategories,
+    fetchCategory,
+    fetchPlaylist,
     fetchYtbId,
-    searchPlaylists,
+    searchGenres,
     searchSpotify,
 } from './search.controller.js'
 import { log } from '../../middlewares/logger.middleware.js'
@@ -12,10 +13,17 @@ const router = express.Router()
 
 router.get('/spotify', log, getSpotifyBearerToken, searchSpotify)
 
+router.get(
+    '/spotify/playlist/:playlistId',
+    log,
+    getSpotifyBearerToken,
+    fetchPlaylist
+)
+
+router.get('/spotify/genre', log, getSpotifyBearerToken, searchGenres)
+
 router.get('/youtube', log, fetchYtbId)
 
-router.get('/', log, fetchCategories)
-
-router.get('/genre', log, getSpotifyBearerToken, searchPlaylists)
+router.get('/', log, fetchCategory)
 
 export const searchRoutes = router
