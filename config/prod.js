@@ -1,7 +1,9 @@
+import 'dotenv/config'
+
 export default {
     dbURL:
         process.env.MONGO_URL ||
-        'mongodb+srv://anistavi:anistavi123456@cluster0.radwujg.mongodb.net/',
+        `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@cluster0.e6gco96.mongodb.net/`,
     dbName: process.env.DB_NAME || 'musicfy',
 }
 

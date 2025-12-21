@@ -150,7 +150,7 @@ async function getCategories() {
 
 async function getAccessToken() {
     logger.info('Fetching spotify API token')
-    const endpoint = `https://accounts.spotify.com/api/token?grant_type=client_credentials&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}`
+    const endpoint = `https://accounts.spotify.com/api/token?grant_type=client_credentials&SPOTIFY_CLIENT_ID=${process.env.SPOTIFY_CLIENT_ID}&SPOTIFY_CLIENT_SECRET=${process.env.SPOTIFY_CLIENT_SECRET}`
     try {
         const res = await fetch(endpoint, {
             method: 'POST',
