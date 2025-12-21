@@ -150,11 +150,20 @@ async function getCategories() {
 
 async function getAccessToken() {
     logger.info('Fetching spotify API token')
-    const endpoint = `https://accounts.spotify.com/api/token?grant_type=client_credentials&SPOTIFY_CLIENT_ID=${process.env.SPOTIFY_CLIENT_ID}&SPOTIFY_CLIENT_SECRET=${process.env.SPOTIFY_CLIENT_SECRET}`
+    const endpoint = `https://accounts.spotify.com/api/token`
+    const clientId = process.env.SPOTIFY_CLIENT_ID
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+        'base64'
+    )
     try {
         const res = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                Authorization: `Basic ${basicAuth}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'grant_type=client_credentials',
         })
         if (!res.ok)
             throw new Error(`Bad response: ${res.status} - ${res.statusText}`)
