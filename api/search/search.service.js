@@ -48,6 +48,8 @@ async function searchSpotify(
         const accessToken = process.env.ACCESS_TOKEN
             ? process.env.ACCESS_TOKEN
             : await _getAccessToken()
+
+        console.log('accessToken: ', accessToken)
         const res = await fetch(endpoint, {
             method: 'GET',
             headers: {
